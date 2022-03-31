@@ -34,3 +34,7 @@ end)
 Unit:test("Expect.toNotBeFalse() passes if given value is not false", function()
   Expect(true):toNotBeFalse()
 end)
+
+Unit:test("deepEquals() passes if it can compare the first level of two tables", function()
+  Unit:deepEquals({1,2,3},{1,2,3})
+end)

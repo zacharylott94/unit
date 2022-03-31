@@ -40,6 +40,19 @@ function Unit:equals(test,expected)
     end
 end
 
+-- Well, kinda deep. First level, anyway
+function Unit:deepEquals(test,expected)
+  local isEqual = true
+  for k,v in pairs(test) do
+    if expected[k] ~= v then isEqual = false end
+  end
+  if isEqual then
+      self:pass()
+  else
+      self:fail(self.testName)
+  end
+end
+
 function Unit:test(testName, testWrapperFunction)
     self.count = self.count + 1
     self.testName = tostring(self.count) .."| " .. testName
