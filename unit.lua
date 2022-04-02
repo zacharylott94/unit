@@ -1,144 +1,56 @@
-local function failString(name,val1,val2)
-  return name .. ": Expected " .. tostring(val1) .. " to be " .. tostring(val2)
-end
-----------------------------------
-Unit = {
-    passed=0,
-    results={},
-    count=0,
-    current=nil,
-    problems={}
-}
-function Unit:fail(problem)
-    self.current = false
-    table.insert(self.problems,problem)
-end
-
-function Unit:pass()
-    if self.current ~= false
-    then
-      self.current =  true
-    end
-end
-
-function Unit:result()
-  if self.current then
-    table.insert(self.results,"good")
-    self.passed = self.passed + 1
-  else
-    for k,v in pairs(self.problems) do
-      table.insert(self.results,v)
-    end
-  end
-end
-
-function Unit:equals(test,expected)
-    if test == expected then
-        self:pass()
-    else
-        self:fail(self.testName)
-    end
-end
+Unit = {}
 
 -- Well, kinda deep. First level, anyway
-function Unit:deepEquals(test,expected)
+function Unit.deepEquals(test,expected)
   local isEqual = true
   for k,v in pairs(test) do
     if expected[k] ~= v then isEqual = false end
   end
   if isEqual then
-      self:pass()
+      return true
   else
-      self:fail(self.testName)
+      return false
   end
 end
 
-function Unit:test(testName, testWrapperFunction)
-    self.count = self.count + 1
-    self.testName = tostring(self.count) .."| " .. testName
-    testWrapperFunction()
-    self.testName = nil
-    self:result()
-    self.current = nil
-    self.problems = {}
-
-end
-
-function Unit:report()
-    print("\n" .. tostring(self.count) .. " total test(s).  " .. tostring(self.passed) .. " test(s) passed.  " .. tostring(self.count - self.passed) .. " test(s) failed." .. "\n____________" )
-    local i = 1
-    while self.results[i] ~= nil do
-        if not (self.results[i] == "good") then
-        print("FAILED " .. self.results[i])
-        end
-        i = i + 1
+function Unit.report(suite)
+  local list = require("list")
+  local h = require("lambda")
+  local isPassing = function (test) 
+    return test.passed
     end
-    print()
+  local isNotPassing = h.compose(isPassing, h.fnot)
+  local total = #suite
+  local passed = list.filter(isPassing)(suite)
+  local failed = list.filter(isNotPassing)(suite)
+    print(string.format("| %s |",suite.name))
+    print(string.format("| %s total test(s). %s test(s) passed. %s test(s) failed. |\n____________", total, #passed, #failed ))
+    for _,test in pairs(failed) do
+      print(string.format("FAILED | %s | Actual: %s | Expected: %s", test.name, test.actual, test.expected))
+    end
 end
 
-function Unit:notEqual (test, expected)
-  if test ~= expected then
-      self:pass()
-  else
-      self:fail(self.testName)
-  end
+function Unit.test(name, fun)
+  local passed, actual, expected = fun()
+
+  return {
+    name = name,
+    passed = passed,
+    actual = actual,
+    expected = expected,
+  }
+
 end
 
-ExpectMT = {
-  __call = function(t,a)
-    t.arg = a
-    return t
-  end
-}
-Expect = {}
-setmetatable(Expect,ExpectMT)
-
-function Expect:toBe (compare)
-  if self.arg == compare
-  then
-    Unit:pass()
-  else
-    Unit:fail(failString(Unit.testName, compare, self.arg))
-  end
-  self.arg = nil
+function Unit.suite(name, tests)
+  local mt = {
+    __index = function(t, index)
+      if index == "name" then
+        return name
+      else
+        return t[index]
+      end
+    end
+  }
+  return setmetatable(tests, mt) --does this still iterate over name?
 end
-
-function Expect:toNotBe (compare)
-  if self.arg ~= compare
-  then
-    Unit:pass()
-  else
-    Unit:fail(Unit.testName .. ": " .. tostring(compare) .. " and " .. tostring(self.arg) .. " are equal.")
-  end
-  self.arg = nil
-end
-
-function Expect:toBeTrue ()
-  if self.arg == true
-  then
-    Unit:pass()
-  else
-    Unit:fail(failString(Unit.testName, self.arg, true))
-  end
-  self.arg = nil
-end
-
-function Expect:toNotBeFalse ()
-  self.toBeTrue(self)
-end
-
-function Expect:toBeFalse ()
-  if self.arg == false
-  then
-    Unit:pass()
-  else
-    Unit:fail(failString(Unit.testName,self.arg,false))
-  end
-  self.arg = nil
-end
-
-function Expect:toNotBeTrue ()
-  self.toBeFalse(self)
-end
-
---------------------

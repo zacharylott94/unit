@@ -1,0 +1,1 @@
+amalg.lua -o ./unit.portable.lua -s ./unit.lua list lambda && luarocks --local build
