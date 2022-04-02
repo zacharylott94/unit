@@ -9,6 +9,13 @@ local suite = Unit.suite("tests for the framework itself", {
   Unit.test("tests work", function() 
     return true
   end),
+
+  Unit.test("Deep equals works", function()
+    local actual = {1,2,3}
+    local expected = {1,2,3}
+    return Unit.deepEquals(actual, expected), actual, expected
+  end)
+
 })
 
 Unit.report(suite)

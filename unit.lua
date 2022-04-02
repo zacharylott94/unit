@@ -52,5 +52,5 @@ function Unit.suite(name, tests)
       end
     end
   }
-  return setmetatable(tests, mt) --does this still iterate over name?
+  return setmetatable(tests, mt) --does this still iterate over name? --It does not
 end

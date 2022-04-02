@@ -180,21 +180,18 @@ function Unit.report(suite)
   local list = require("list")
   local h = require("lambda")
   local isPassing = function (test) 
-    return test.passing
+    return test.passed
     end
   local isNotPassing = h.compose(isPassing, h.fnot)
   local total = #suite
   local passed = list.filter(isPassing)(suite)
   local failed = list.filter(isNotPassing)(suite)
-    print(string.format("\n %s total test(s). %s test(s) passed. %s test(s) failed.\n____________", total, #passed, #failed ))
+    print(string.format("| %s |",suite.name))
+    print(string.format("| %s total test(s). %s test(s) passed. %s test(s) failed. |\n____________", total, #passed, #failed ))
     for _,test in pairs(failed) do
-      print(string.format("FAILED | %s | Expected: %s | Actual: %s", test.name, test.expected, test.actual))
+      print(string.format("FAILED | %s | Actual: %s | Expected: %s", test.name, test.actual, test.expected))
     end
 end
-
-
-
--- new
 
 function Unit.test(name, fun)
   local passed, actual, expected = fun()
@@ -218,5 +215,5 @@ function Unit.suite(name, tests)
       end
     end
   }
-  return setmetatable(tests, mt) --does this still iterate over name?
+  return setmetatable(tests, mt) --does this still iterate over name? --It does not
 end
