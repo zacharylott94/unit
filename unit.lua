@@ -1,23 +1,65 @@
+-- stolen from https://www.codegrepper.com/code-examples/lua/lua+table+pretty+print
+local function dump(o)
+  if type(o) == 'table' then
+      local s = '{ '
+      for k,v in pairs(o) do
+              if type(k) ~= 'number' then k = '"'..k..'"' end
+              s = s  ..k..':' .. dump(v) .. ','
+      end
+      return s .. '} '
+  else
+      return tostring(o)
+  end
+end
+
+
+
+
 Unit = {}
 
 -- Well, kinda deep. First level, anyway
 function Unit.deepEquals(test,expected)
-  local isEqual = true
+  if (#test == 0) and (#expected == 0) then return end
+  local isEqual = false
   for k,v in pairs(test) do
-    if expected[k] ~= v then isEqual = false end
+    if expected[k] ~= v then 
+      isEqual = false
+      break
+    else 
+      isEqual = true 
+    end
   end
   if isEqual then
-      return true
+      return 
   else
-      return false
+      return {
+        actual = dump(test),
+        expected = dump(expected)
+      }
   end
+end
+
+function Unit.equals(actual, expected)
+  if actual == expected then return end
+  return {
+    actual = actual,
+    expected = expected,
+  }
+end
+
+function Unit.shouldFail(val)
+  if val then return end
+  return {
+    expected = "A problem",
+    actual = "No problem"
+  }
 end
 
 function Unit.report(suite)
   local list = require("list")
   local h = require("lambda")
   local isPassing = function (test) 
-    return test.passed
+    return (#test.problems == 0)
     end
   local isNotPassing = h.compose(isPassing, h.fnot)
   local total = #suite
@@ -26,18 +68,19 @@ function Unit.report(suite)
     print(string.format("| %s |",suite.name))
     print(string.format("| %s total test(s). %s test(s) passed. %s test(s) failed. |\n____________", total, #passed, #failed ))
     for _,test in pairs(failed) do
-      print(string.format("FAILED | %s | Actual: %s | Expected: %s", test.name, test.actual, test.expected))
+      print(string.format("FAILED | %s", test.name))
+      for _,problem in pairs(test.problems) do
+        print(string.format("\tactual: %s, Expected:%s", problem.actual, problem.expected))
+      end
     end
 end
 
 function Unit.test(name, fun)
-  local passed, actual, expected = fun()
+  local problems = fun()
 
   return {
     name = name,
-    passed = passed,
-    actual = actual,
-    expected = expected,
+    problems = problems
   }
 
 end
